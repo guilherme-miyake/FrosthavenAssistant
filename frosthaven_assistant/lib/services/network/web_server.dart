@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:collection/collection.dart';
+import 'package:frosthaven_assistant/Resource/commands/add_character_command.dart';
 import 'package:frosthaven_assistant/Resource/commands/add_condition_command.dart';
 import 'package:frosthaven_assistant/Resource/commands/add_standee_command.dart';
 import 'package:frosthaven_assistant/Resource/commands/change_stat_commands/change_health_command.dart';
@@ -12,7 +13,9 @@ import 'package:frosthaven_assistant/Resource/commands/draw_loot_card_command.da
 import 'package:frosthaven_assistant/Resource/commands/ice_wraith_change_form_command.dart';
 import 'package:frosthaven_assistant/Resource/commands/imbue_element_command.dart';
 import 'package:frosthaven_assistant/Resource/commands/next_round_command.dart';
+import 'package:frosthaven_assistant/Resource/commands/remove_character_command.dart';
 import 'package:frosthaven_assistant/Resource/commands/remove_condition_command.dart';
+import 'package:frosthaven_assistant/Resource/commands/set_character_level_command.dart';
 import 'package:frosthaven_assistant/Resource/commands/set_init_command.dart';
 import 'package:frosthaven_assistant/Resource/commands/set_loot_owner_command.dart';
 import 'package:frosthaven_assistant/Resource/commands/set_scenario_command.dart';
@@ -48,6 +51,8 @@ class WebServer {
       ..post('/startRound', _startRoundHandler)
       ..post('/endRound', _endRoundHandler)
       ..post('/addMonster', _addMonsterHandler)
+      ..post('/addCharacter', _addCharacterHandler)
+      ..post('/removeCharacter', _removeCharacterHandler)
       ..post('/switchMonster', _switchMonsterTypeHandler)
       ..post('/setScenario', _setScenarioHandler)
       ..post('/setSection', _setSectionHandler)
@@ -287,6 +292,8 @@ class WebServer {
       } else if (what == "xp") {
         _gameState.action(
             ChangeXPCommand(change, target.id, target.ownerId));
+      } else if (what == "level") {
+        _gameState.action(SetCharacterLevelCommand(change, target.id));
       }
     }
     return _getStateHandler(request);
@@ -308,6 +315,25 @@ class WebServer {
   Future<Response> _endRoundHandler(Request request) async {
     _gameState.action(NextRoundCommand());
     return Response.ok('{}');
+  }
+  
+  Future<Response> _addCharacterHandler(Request request) async {
+    var data = Uri.decodeFull(await request.readAsString());
+    Map<String, dynamic> info = jsonDecode(data);
+    var characterName = info["character"];
+    _gameState.action(AddCharacterCommand(characterName, characterName, 1));
+    return _getStateHandler(request);
+  }
+
+  Future<Response> _removeCharacterHandler(Request request) async {
+    var data = Uri.decodeFull(await request.readAsString());
+    Map<String, dynamic> info = jsonDecode(data);
+    var characterName = info["character"];
+    var matchingCharacters =  _gameState.currentList.where((e) => e is Character && e.id == characterName).map((e) => e as Character);
+    if(matchingCharacters.isNotEmpty) {
+      _gameState.action(RemoveCharacterCommand(matchingCharacters.toList()));
+    }
+    return _getStateHandler(request);
   }
 
   Future<Response> _addMonsterHandler(Request request) async {
