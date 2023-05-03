@@ -37,7 +37,8 @@ class Downloader {
     var catalog = await forteller.getCatalog();
     var frosthavenEntry =
         catalog.entries.firstWhere((element) => element.name == "Frosthaven");
-    var tempFolder = p.join((await getApplicationDocumentsDirectory()).path, "frosthaven","audio","temp");
+    var tempFolder = p.join((await getApplicationDocumentsDirectory()).path,
+        "frosthaven", "audio", "temp");
     var chapters = await forteller.getChapters(frosthavenEntry.id);
 
     final Pattern scenarioPattern = RegExp(r'[0-9]{3}');
@@ -47,8 +48,9 @@ class Downloader {
     for (var chapter in chapters) {
       print("Processing Chapter ${currentChapter.value}/$totalChapters");
       chapterProgress.value =
-      (currentChapterNb.toDouble()-1) / totalChapters.toDouble();
-      currentChapter.value = "$currentChapterNb of $totalChapters : ${chapter.name}";
+          (currentChapterNb.toDouble() - 1) / totalChapters.toDouble();
+      currentChapter.value =
+          "$currentChapterNb of $totalChapters : ${chapter.name}";
       currentChapterNb++;
       var trackCount = 0;
       var currentCount = 0;
@@ -62,7 +64,8 @@ class Downloader {
       var chapterFolder = p.join(tempFolder, chapter.name);
       var currentTrackNb = 0;
       for (var track in playlist.content) {
-        currentTrack.value = "${currentTrackNb+1} of ${playlist.content.length} : ${track.title}";
+        currentTrack.value =
+            "${currentTrackNb + 1} of ${playlist.content.length} : ${track.title}";
         trackProgress.value =
             currentTrackNb.toDouble() / playlist.content.length.toDouble();
         currentTrackNb++;
@@ -75,37 +78,42 @@ class Downloader {
       }
 
       currentTrack.value = "Processing Chapter Downloads";
-      
+
       // Re-organize the content
-      var outFolder = p.join((await getApplicationDocumentsDirectory()).path, "frosthaven","audio","output");
+      var outFolder = p.join((await getApplicationDocumentsDirectory()).path,
+          "frosthaven", "audio", "output");
       var scenarioFolder = p.join(outFolder, "scenarios");
       var sectionsFolder = p.join(outFolder, "sections");
       var soloFolder = p.join(outFolder, "solo");
       var eventsFolder = p.join(outFolder, "events");
 
-      Directory(scenarioFolder).createSync(recursive: true);
-      Directory(sectionsFolder).createSync();
-      Directory(soloFolder).createSync();
-      Directory(eventsFolder).createSync();
+      await Directory(scenarioFolder).create(recursive: true);
+      await Directory(sectionsFolder).create();
+      await Directory(soloFolder).create();
+      await Directory(eventsFolder).create();
 
       if (scenarioPattern.allMatches(chapter.shortKey).isNotEmpty) {
         // This is a scenario Chapter, Copy the introduction to scenarios/{number}.mp3
         int scenarioNumber = int.parse(chapter.shortKey);
-        var destination = p.join(scenarioFolder, "$scenarioNumber.mp3");
-        if (!File(destination).existsSync()) {
-          final introductionCandidates = [
-            "Introduction.mp3",
-            "Intro.mp3",
-            "introduction.mp3",
-            " Introduction.mp3",
-            "Introduction .mp3",
-          ];
-          for (var candidate in introductionCandidates) {
-            File introduction = File(p.join(chapterFolder, candidate));
-            if (introduction.existsSync()) {
-              introduction
-                  .copySync(p.join(scenarioFolder, "$scenarioNumber.mp3"));
-            }
+
+        final introductionCandidates = [
+          "Introduction.mp3",
+          "Intro.mp3",
+          "introduction.mp3",
+          " Introduction.mp3",
+          "Introduction .mp3",
+        ];
+        for (var candidate in introductionCandidates) {
+          tentativeCopy(
+              chapterFolder, candidate, scenarioFolder, "$scenarioNumber.mp3");
+        }
+
+        // Special case for scenario 4 (choice)
+        if (scenarioNumber == 4) {
+          tentativeCopy(chapterFolder, "Hold.mp3", scenarioFolder, "4.mp3");
+          for (var choice in ["A", "B"]) {
+            tentativeCopy(chapterFolder, "Hold.subs/Introduction $choice.mp3",
+                scenarioFolder, "4$choice.mp3");
           }
         }
       } else if (chapter.shortKey == "RD01" ||
@@ -114,8 +122,8 @@ class Downloader {
           chapter.shortKey == "SOE") {
         //Events
         var dir = Directory(chapterFolder);
-        for (var entity in dir.listSync()) {
-          var stat = entity.statSync();
+        dir.list().listen((entity) async {
+          var stat = await entity.stat();
           if (stat.type == FileSystemEntityType.file) {
             var name = p.basename(entity.path);
             if (chapter.shortKey == "SOE") {
@@ -126,27 +134,27 @@ class Downloader {
             }
 
             var destination = p.join(eventsFolder, name);
-            if (!File(destination).existsSync()) {
-              File(entity.path).copySync(destination);
+            if (!await File(destination).exists()) {
+              File(entity.path).copy(destination);
             }
 
             var outcomeDirectory = Directory(
                 "${p.join(entity.parent.path, p.basenameWithoutExtension(entity.path))}.subs");
-            if (outcomeDirectory.existsSync()) {
-              for (var subEntity in outcomeDirectory.listSync()) {
+            if (await outcomeDirectory.exists()) {
+              outcomeDirectory.list().listen((subEntity) async {
                 if (p.basename(subEntity.path) == "Option A_.mp3") {
                   var copyName = "${p.basenameWithoutExtension(name)}_A.mp3";
                   destination = p.join(eventsFolder, copyName);
-                  File(subEntity.path).copySync(destination);
+                  File(subEntity.path).copy(destination);
                 } else if (p.basename(subEntity.path) == "Option B_.mp3") {
                   var copyName = "${p.basenameWithoutExtension(name)}_B.mp3";
                   destination = p.join(eventsFolder, copyName);
-                  File(subEntity.path).copySync(destination);
+                  File(subEntity.path).copy(destination);
                 }
-              }
+              });
             }
           }
-        }
+        });
       }
 
       // Also copy all "Section" sub files to the sections folder
@@ -154,24 +162,37 @@ class Downloader {
     }
   }
 
-  void recursiveCopySections(String folder, String sectionsFolder) {
+  void tentativeCopy(String sourceFolder, String sourceName,
+      String destinationFolder, String destinationName) async {
+    var destination = p.join(destinationFolder, destinationName);
+    if (!await File(destination).exists()) {
+      File source = File(p.join(sourceFolder, sourceName));
+      if (await source.exists()) {
+        // No need to wait for this one to complete, it can run in the BG as we get onto downloading other assets
+        source.copy(destination);
+      }
+    }
+  }
+
+  void recursiveCopySections(String folder, String sectionsFolder) async {
     final sectionsPattern = RegExp(r'\d{1,3}\.\d{1,2}\.mp3');
     var dir = Directory(folder);
 
-    for (var entity in dir.listSync()) {
-      var stat = entity.statSync();
+    dir.list().listen((entity) async {
+      var stat = await entity.stat();
       if (stat.type == FileSystemEntityType.file) {
-        var name = p.basenameWithoutExtension(entity.path).trim() + p.extension(entity.path);
+        var name = p.basenameWithoutExtension(entity.path).trim() +
+            p.extension(entity.path);
         if (sectionsPattern.hasMatch(name)) {
           var destination = p.join(sectionsFolder, name);
-          if (!File(destination).existsSync()) {
-            File(entity.path).copySync(destination);
+          if (!await File(destination).exists()) {
+            File(entity.path).copy(destination);
           }
         }
       } else if (stat.type == FileSystemEntityType.directory) {
         recursiveCopySections(entity.path, sectionsFolder);
       }
-    }
+    });
   }
 
   int countTracks(Track track) {
@@ -191,7 +212,7 @@ class Downloader {
     currentCount++;
     var outFile = File(p.join(base, "${sanitize(track.title)}.mp3"));
 
-    if (outFile.existsSync()) {
+    if (await outFile.exists()) {
       print(
           "Skipping [$currentCount/$totalCount] ${outFile.path} (already downloaded)");
     } else {
