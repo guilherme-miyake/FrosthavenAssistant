@@ -23,6 +23,7 @@ class Settings {
           : 1.0); //if ! mobile ->2.0
   final userScalingMenus = ValueNotifier<double>(1.0);
   final fullScreen = ValueNotifier<bool>(true);
+  final alwaysOnTop = ValueNotifier<bool>(false);
   final darkMode = ValueNotifier<bool>(false);
   final noInit = ValueNotifier<bool>(false);
   final noStandees = ValueNotifier<bool>(false);
@@ -45,6 +46,7 @@ class Settings {
 
   //network
   final server = ValueNotifier<bool>(false); //not saving these
+
   final client = ValueNotifier<ClientState>(ClientState.disconnected);
   String lastKnownConnection = "192.168.1.???"; //only these
   String lastKnownPort = "4567";
@@ -52,11 +54,30 @@ class Settings {
 
   bool connectClientOnStartup = false;
 
+  final enableWebServer = ValueNotifier<bool>(false);
+  String lastKnownWebPort = "8080";
+  final webFolder = ValueNotifier<String>("");
+
+  final forteller = ValueNotifier<bool>(false);
+  String lastKnownFortellerEmail = "";
+  String lastKnownFortellerPassword = "";
+
   Future<void> init() async {
     await loadFromDisk();
     setFullscreen(fullScreen.value);
+    setAlwaysOnTop(alwaysOnTop.value);
 
     getIt<Network>().networkInfo.initNetworkInfo();
+  }
+
+  Future<void> setAlwaysOnTop(bool value) async {
+    alwaysOnTop.value = value;
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      windowManager.ensureInitialized();
+      windowManager.waitUntilReadyToShow().then((_) async {
+        await windowManager.setAlwaysOnTop(value);
+      });
+    }
   }
 
   Future<void> setFullscreen(bool fullscreen) async {
@@ -76,7 +97,6 @@ class Settings {
           await windowManager.center();
           await windowManager.show();
           await windowManager.setSkipTaskbar(false);
-          //await windowManager.setAlwaysOnTop(true);
           await windowManager
               .setPosition(const Offset(0, 0)); //weird this was needed
           await windowManager.show();
@@ -87,7 +107,6 @@ class Settings {
           await windowManager.show();
           await windowManager.setSkipTaskbar(false);
           await windowManager.focus();
-          await windowManager.setAlwaysOnTop(false);
         }
       });
       //await WindowManager.instance.setFullScreen(fullscreen);
@@ -183,6 +202,9 @@ class Settings {
       if (data["fullScreen"] != null) {
         fullScreen.value = data["fullScreen"];
       }
+      if (data["alwaysOnTop"] != null) {
+        alwaysOnTop.value = data["alwaysOnTop"];
+      }
       if (data["softNumpadInput"] != null) {
         softNumpadInput.value = data["softNumpadInput"];
       }
@@ -252,6 +274,25 @@ class Settings {
           getIt<Client>().connect(lastKnownConnection);
         });
       }
+
+      if(data['enableWebServer'] != null) {
+        enableWebServer.value = data['enableWebServer'];
+      }
+
+      if(data['lastKnownWebPort'] != null) {
+        lastKnownWebPort = data['lastKnownWebPort'];
+      }
+
+      if(data['webFolder'] != null) {
+        webFolder.value = data['webFolder'];
+      }
+
+      if(data['lastKnownFortellerEmail'] != null) {
+        lastKnownFortellerEmail = data['lastKnownFortellerEmail'];
+      }
+      if(data['lastKnownFortellerPassword'] != null) {
+        lastKnownFortellerPassword = data['lastKnownFortellerPassword'];
+      }
     }
   }
 
@@ -284,6 +325,7 @@ class Settings {
         '"userScalingBars": ${userScalingBars.value}, '
         '"userScalingMenus": ${userScalingMenus.value}, '
         '"fullScreen": ${fullScreen.value}, '
+        '"alwaysOnTop": ${alwaysOnTop.value}, '
         '"softNumpadInput": ${softNumpadInput.value}, '
         '"noInit": ${noInit.value}, '
         '"noStandees": ${noStandees.value}, '
@@ -303,7 +345,12 @@ class Settings {
         '"connectClientOnStartup": $connectClientOnStartup, '
         '"lastKnownConnection": "$lastKnownConnection", '
         '"lastKnownPort": "$lastKnownPort", '
-        '"lastKnownHostIP": "$lastKnownHostIP" '
+        '"lastKnownHostIP": "$lastKnownHostIP", '
+        '"enableWebServer": ${enableWebServer.value}, '
+        '"lastKnownWebPort": "$lastKnownWebPort", '
+        '"webFolder": "${webFolder.value}", '
+        '"lastKnownFortellerEmail": "$lastKnownFortellerEmail", '
+        '"lastKnownFortellerPassword": "$lastKnownFortellerPassword" '
         '}';
   }
 }

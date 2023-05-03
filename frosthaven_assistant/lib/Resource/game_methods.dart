@@ -434,12 +434,13 @@ class GameMethods {
 
     String initMessage = "";
     if (section) {
-      var sectionData = _gameState
+      var sections =  _gameState
           .modelData
           .value[_gameState.currentCampaign.value]
           ?.scenarios[_gameState.scenario.value]
-          ?.sections
-          .firstWhere((element) => element.name == scenario);
+          ?.sections;
+
+      var sectionData = sections?.firstWhereOrNull((element) => element.name == scenario);
       if (sectionData != null) {
         monsters = sectionData.monsters;
         specialRules = sectionData.specialRules.toList();
@@ -486,14 +487,13 @@ class GameMethods {
     }
 
     //add objectives and escorts
-    for (var item in specialRules) {
-      if (item.type == "Objective") {
-        if (item.condition == "" ||
-            StatCalculator.evaluateCondition(item.condition)) {
+    for(var item in specialRules) {
+      if(item.type == "Objective"){
+        if (item.condition == ""  || StatCalculator.evaluateCondition(item.condition)) {
           Character objective = GameMethods.createCharacter(
               "Objective", item.name, _gameState.level.value + 1)!;
           objective.characterState.maxHealth.value =
-              StatCalculator.calculateFormula(item.health.toString())!;
+          StatCalculator.calculateFormula(item.health.toString())!;
           objective.characterState.health.value =
               objective.characterState.maxHealth.value;
           objective.characterState.initiative.value = item.init;
