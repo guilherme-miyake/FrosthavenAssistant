@@ -20,16 +20,27 @@ class Downloader {
   final currentTrack = ValueNotifier<String>("");
   final trackProgress = ValueNotifier<double>(0.0);
 
+  int _runNumber = 0;
+
   Future<void> stopFetchingData() async {
+    _runNumber++;
     getIt<Settings>().forteller.value = false;
   }
 
-  void startFetchingData() {
+  void startFetchingData() async {
     getIt<Settings>().forteller.value = true;
-    fetchData();
+    var cancelled = await fetchData(_runNumber);
+    if (!cancelled) {
+      _runNumber++;
+      currentChapter.value = "";
+      currentTrack.value = "";
+      chapterProgress.value = 0;
+      trackProgress.value = 0;
+      getIt<Settings>().forteller.value = false;
+    }
   }
 
-  Future<void> fetchData() async {
+  Future<bool> fetchData(localRunNumber) async {
     var settings = getIt<Settings>();
     // Insert email and password of forteller account here
     var forteller = Forteller(
@@ -51,6 +62,8 @@ class Downloader {
           (currentChapterNb.toDouble() - 1) / totalChapters.toDouble();
       currentChapter.value =
           "$currentChapterNb of $totalChapters : ${chapter.name}";
+      trackProgress.value = 0;
+      currentTrack.value = "Fetching Playlist";
       currentChapterNb++;
       var trackCount = 0;
       var currentCount = 0;
@@ -65,13 +78,13 @@ class Downloader {
       var currentTrackNb = 0;
       for (var track in playlist.content) {
         currentTrack.value =
-            "${currentTrackNb + 1} of ${playlist.content.length} : ${track.title}";
+            "Fetching ${currentTrackNb + 1} of ${playlist.content.length} : ${track.title}";
         trackProgress.value =
             currentTrackNb.toDouble() / playlist.content.length.toDouble();
         currentTrackNb++;
 
-        if (!getIt<Settings>().forteller.value) {
-          return;
+        if (localRunNumber != _runNumber) {
+          return true;
         }
         currentCount = await downloadTrack(forteller, chapterFolder, track,
             playlist, currentCount, trackCount);
@@ -116,6 +129,13 @@ class Downloader {
                 scenarioFolder, "4$choice.mp3");
           }
         }
+        //Special case for scenario 93 (choice)
+        if (scenarioNumber == 93) {
+          tentativeCopy(chapterFolder, "Introduction.subs/Section A.mp3",
+              scenarioFolder, "93A.mp3");
+          tentativeCopy(chapterFolder, "Introduction.subs/Section B.mp3",
+              scenarioFolder, "93B.mp3");
+        }
       } else if (chapter.shortKey == "RD01" ||
           chapter.shortKey == "RD02" ||
           chapter.shortKey == "WOE" ||
@@ -159,7 +179,11 @@ class Downloader {
 
       // Also copy all "Section" sub files to the sections folder
       recursiveCopySections(chapterFolder, sectionsFolder);
+
+      currentTrack.value = "Done";
+      trackProgress.value = 1;
     }
+    return false;
   }
 
   void tentativeCopy(String sourceFolder, String sourceName,

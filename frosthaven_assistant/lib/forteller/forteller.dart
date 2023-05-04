@@ -16,7 +16,7 @@ class Forteller {
   String? refreshToken;
 
   Forteller(this.email, this.password) {
-    //login();
+    login();
   }
 
   Future<bool> login() async {
@@ -109,7 +109,7 @@ class Forteller {
       if (response.statusCode == 429) {
         //print(response.headers);
         int retryAfter = int.parse(response.headers["retry-after"] ?? "5");
-        sleep(Duration(seconds: retryAfter));
+        await Future.delayed(Duration(seconds: retryAfter));
       } else {
         // We got de-authenticated, let's re-authenticate
         if (! await login()) {

@@ -657,7 +657,7 @@ class SettingsMenuState extends State<SettingsMenu> {
                                   child: ValueListenableBuilder<String>(
                                       valueListenable: downloader.currentTrack,
                                       builder: (context, value, child) {
-                                        return Text("Track $value");
+                                        return Text(value);
                                       })),
                               Container(
                                   margin: const EdgeInsets.only(top: 5),
