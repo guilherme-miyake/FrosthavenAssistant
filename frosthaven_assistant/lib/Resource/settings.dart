@@ -36,8 +36,8 @@ class Settings {
   final showCustomContent = ValueNotifier<bool>(true);
   final showSectionsInMainView = ValueNotifier<bool>(true);
   final showReminders = ValueNotifier<bool>(true);
-  final autoAddStandees = ValueNotifier<bool>(true);
-  final autoAddSpawns = ValueNotifier<bool>(true);
+  final autoAddStandees = ValueNotifier<bool>(false);
+  final autoAddSpawns = ValueNotifier<bool>(false);
 
   //used for both initiative and search menus
   final softNumpadInput = ValueNotifier<bool>(false);
