@@ -107,6 +107,8 @@ dependencies:
   encrypt: ^5.0.1
   process_run: ^0.13.0
   path_provider: ^2.0.14
+#  ffmpeg_kit_flutter: ^5.1.0
+  ffmpeg_kit_flutter_full: ^5.1.0
 
 
 

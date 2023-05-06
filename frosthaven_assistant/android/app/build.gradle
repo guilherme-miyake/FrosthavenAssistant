@@ -49,7 +49,7 @@ android {
 
     defaultConfig {
         applicationId "com.tarmslitaren.frosthaven_assistant"
-        minSdkVersion flutter.minSdkVersion
+        minSdkVersion  localProperties.getProperty('flutter.minSdkVersion').toInteger()
         targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName

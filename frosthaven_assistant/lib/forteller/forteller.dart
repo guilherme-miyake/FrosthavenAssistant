@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:encrypt/encrypt.dart';
+import 'package:ffmpeg_kit_flutter_full/ffmpeg_kit.dart';
 import 'package:process_run/shell.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -86,12 +86,18 @@ class Forteller {
     var token = await getStreamKey(trackLocatorId, playlistId);
     if(token != null) {
       var cmd =
-          "ffmpeg -headers \"Authorization: Bearer $token\" -i \"${playlistUrl
+          "-headers \"Authorization: Bearer $token\" -i \"${playlistUrl
           .replaceAll(" ",
           "%20")}(format=m3u8-aapl,encryption=cbc,type=audio)\" -v error -b:a 192k \"${out
           .path}\"";
-      var shell = Shell(stdout: stdout, commandVerbose: false);
-      await shell.run(cmd);
+      if(Platform.isWindows) {
+        var shell = Shell(stdout: stdout, commandVerbose: false);
+        await shell.run("ffmpeg $cmd");
+      } else {
+        await FFmpegKit.execute(cmd);
+      }
+      var stat = await out.stat();
+      print("Got ${stat.size} bytes");
     }
     return;
   }
