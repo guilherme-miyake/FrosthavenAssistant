@@ -57,6 +57,9 @@ class Downloader {
     var totalChapters = chapters.length;
     var currentChapterNb = 1;
     for (var chapter in chapters) {
+      if (chapter.name != "Solo Scenarios") {
+        continue;
+      }
       print("Processing Chapter ${currentChapter.value}/$totalChapters");
       chapterProgress.value =
           (currentChapterNb.toDouble() - 1) / totalChapters.toDouble();
@@ -175,6 +178,40 @@ class Downloader {
             }
           }
         });
+      } else if (chapter.name == "Solo Scenarios") {
+        var mappings = [
+          "Wonder of Nature",
+          "Race Against the Clock",
+          "Scouting Ambush",
+          "The Dead of Night",
+          "Bones in the Dirt",
+          "Divide and Conquer",
+          "Path of Ancestry",
+          "Crumbling Descent",
+          "Tuning the Resonance",
+          "A Magnificent Trap",
+          "A Collection of Suffering",
+          "Fighting Snow with Snow",
+          "Under the Ice",
+          "Recharge",
+          "Boiler Room",
+          "Wet Work",
+          "Crash Against the Waves",
+        ];
+        var dir = Directory(chapterFolder);
+        dir.list().listen((entity) async {
+          var stat = await entity.stat();
+          if (stat.type == FileSystemEntityType.file) {
+            var name = p.basenameWithoutExtension(entity.path);
+            var index = mappings.indexOf(name);
+            if (index > -1) {
+              var number = 138 + index;
+              tentativeCopy(chapterFolder, "$name.mp3", soloFolder,
+                  "$number.mp3");
+              await recursiveCopySolo(p.join(chapterFolder,"$name.subs"), number, 1, soloFolder);
+            }
+          }
+        });
       }
 
       // Also copy all "Section" sub files to the sections folder
@@ -184,6 +221,24 @@ class Downloader {
       trackProgress.value = 1;
     }
     return false;
+  }
+
+  Future<void> recursiveCopySolo(String folder, int number, int level, String soloFolder) async {
+    var dir = Directory(folder);
+    dir.list().listen((entity) async {
+      var stat = await entity.stat();
+      if (stat.type == FileSystemEntityType.file) {
+        var name = p.basenameWithoutExtension(entity.path);
+        if (name.startsWith("Section ")) {
+          tentativeCopy(folder, "$name.mp3", soloFolder,
+              "$number.$level.mp3");
+          recursiveCopySolo(p.join(folder,"$name.subs"), number, level+1, soloFolder);
+        } else if (name == "Conclusion") {
+          tentativeCopy(folder, "$name.mp3", soloFolder,
+              "$number.end.mp3");
+        }
+      }
+    });
   }
 
   void tentativeCopy(String sourceFolder, String sourceName,
