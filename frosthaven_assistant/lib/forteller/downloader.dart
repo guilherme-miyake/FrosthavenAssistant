@@ -57,9 +57,9 @@ class Downloader {
     var totalChapters = chapters.length;
     var currentChapterNb = 1;
     for (var chapter in chapters) {
-      if (chapter.name != "Solo Scenarios") {
-        continue;
-      }
+      // if (chapter.name != "Solo Scenarios") {
+      //   continue;
+      // }
       print("Processing Chapter ${currentChapter.value}/$totalChapters");
       chapterProgress.value =
           (currentChapterNb.toDouble() - 1) / totalChapters.toDouble();
