@@ -89,3 +89,4 @@ lint/outputs/
 lint/tmp/
 # lint/reports/
 *.mp3
+.DS_Store
