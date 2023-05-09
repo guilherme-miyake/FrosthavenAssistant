@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:ffi';
 import 'dart:io';
 import 'dart:math';
 
@@ -37,9 +38,7 @@ import '../service_locator.dart';
 import 'package:path/path.dart' as p;
 
 class WebServer {
-  static const String SHAMBLING_SKELETON = "Shambling Skeleton";
   final GameState _gameState = getIt<GameState>();
-  final port = 8080;
 
   HttpServer? _server;
 
@@ -68,7 +67,7 @@ class WebServer {
       // .addHandler(_router),
       _router,
       InternetAddress.anyIPv4, // Allows external connections
-      port,
+      int.parse(getIt<Settings>().lastKnownWebPort),
     );
   }
 
