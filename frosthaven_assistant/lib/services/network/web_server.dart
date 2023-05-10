@@ -102,8 +102,7 @@ class WebServer {
   }
 
   Future<Response> _playFileHandler(Request request, String folder, String file) async {
-    var track = p.join(folder,file);
-    _gameState.playAudio(track);
+    _gameState.playAudio(folder, file);
     return Response.ok("");
   }
 

@@ -105,15 +105,15 @@ class ActionHandler {
     return _audioPlayer.onPlayerStateChanged;
   }
 
-  void playAudio(String path) {
+  void playAudio(String folder, String file) {
     bool isServer = getIt<Settings>().server.value;
     bool isClient = getIt<Settings>().client.value == ClientState.connected;
     if (isServer) {
-      getIt<Network>().server.send("Play:$path");
+      getIt<Network>().server.send("Play:$folder:$file");
     } else if (isClient) {
-      _communication.sendToAll("Play:$path");
+      _communication.sendToAll("Play:$folder:$file");
     }
-    playAudioFile(path);
+    playAudioFile(folder, file);
   }
 
   void pauseAudio() {
@@ -136,9 +136,12 @@ class ActionHandler {
     }
   }
 
-  void playAudioFile(String track) async {
+  void playAudioFile(String folder, String file) async {
     var path = p.join((await getApplicationDocumentsDirectory()).path,
-        "frosthaven", "audio", "output", track);
+        "frosthaven", "audio", "output", folder, file);
+    if(_audioPlayer.state == PlayerState.playing || _audioPlayer.state == PlayerState.paused) {
+      _audioPlayer.stop();
+    }
     _audioPlayer.play(DeviceFileSource(path));
   }
 

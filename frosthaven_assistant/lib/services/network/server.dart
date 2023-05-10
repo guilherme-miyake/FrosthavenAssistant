@@ -217,9 +217,15 @@ class Server {
                 print('ping from ${client.remoteAddress}');
                 sendToOnly("pong", client);
               } else if (message.startsWith("Play:")) {
-                String path = message.split(":")[1];
-                _gameState.playAudioFile(path);
+                List<String> parts = message.split(":");
+                if (parts.length == 3) {
+                  String folder = parts[1];
+                  String file = parts[2];
+                  print('Play from ${client.remoteAddress} : $folder / $file');
+                  _gameState.playAudioFile(folder, file);
+                }
               } else if (message.startsWith("Pause")) {
+                print('Pause from ${client.remoteAddress}');
                 _gameState.pauseAudioFile();
               }
             } else {
@@ -244,7 +250,9 @@ class Server {
               break;
             }
           }*/
-          if(error is SocketException && (error.osError?.errorCode == 103 || error.osError?.errorCode == 32)) {
+          if (error is SocketException &&
+              (error.osError?.errorCode == 103 ||
+                  error.osError?.errorCode == 32)) {
             stopServer(error.toString());
           }
         },

@@ -26,9 +26,7 @@ class Client {
     try {
       int port = int.parse(_settings.lastKnownPort);
       debugPrint("port nr: ${port.toString()}");
-      await _connection
-          .connect(address, port)
-          .then((Socket socket) {
+      await _connection.connect(address, port).then((Socket socket) {
         runZoned(() {
           _settings.client.value = ClientState.connected;
           String info =
@@ -132,9 +130,15 @@ class Client {
         } else if (message.startsWith("pong")) {
           _serverResponsive = true;
         } else if (message.startsWith("Play:")) {
-          String path = message.split(":")[1];
-          _gameState.playAudioFile(path);
+          List<String> parts = message.split(":");
+          if (parts.length == 3) {
+            String folder = parts[1];
+            String file = parts[2];
+            print('Play from server : $folder / $file');
+            _gameState.playAudioFile(folder, file);
+          }
         } else if (message.startsWith("Pause")) {
+          print('Pause from server');
           _gameState.pauseAudioFile();
         }
       } else {
