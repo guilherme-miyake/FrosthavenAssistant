@@ -131,6 +131,11 @@ class Client {
           _send("pong");
         } else if (message.startsWith("pong")) {
           _serverResponsive = true;
+        } else if (message.startsWith("Play:")) {
+          String path = message.split(":")[1];
+          _gameState.playAudioFile(path);
+        } else if (message.startsWith("Pause")) {
+          _gameState.pauseAudioFile();
         }
       } else {
         _leftOverMessage = message;
