@@ -109,6 +109,7 @@ dependencies:
   path_provider: ^2.0.14
 #  ffmpeg_kit_flutter: ^5.1.0
   ffmpeg_kit_flutter_full: ^5.1.0
+  audioplayers: ^4.0.1
 
 
 

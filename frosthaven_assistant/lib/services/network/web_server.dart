@@ -14,6 +14,7 @@ import 'package:frosthaven_assistant/Resource/commands/draw_loot_card_command.da
 import 'package:frosthaven_assistant/Resource/commands/ice_wraith_change_form_command.dart';
 import 'package:frosthaven_assistant/Resource/commands/imbue_element_command.dart';
 import 'package:frosthaven_assistant/Resource/commands/next_round_command.dart';
+import 'package:frosthaven_assistant/Resource/commands/play_audio_command.dart';
 import 'package:frosthaven_assistant/Resource/commands/remove_character_command.dart';
 import 'package:frosthaven_assistant/Resource/commands/remove_condition_command.dart';
 import 'package:frosthaven_assistant/Resource/commands/set_character_level_command.dart';
@@ -46,6 +47,7 @@ class WebServer {
     final _router = shelf_router.Router()
       ..get('/state', _getStateHandler)
       ..get('/file/<folder>/<file>', _getFileHandler)
+      ..get('/play/<folder>/<file>', _playFileHandler)
       ..get('/out/<file>', _getOutFileHandler)
       ..post('/startRound', _startRoundHandler)
       ..post('/endRound', _endRoundHandler)
@@ -88,15 +90,22 @@ class WebServer {
       return Response.internalServerError();
     }
   }
+
   Future<Response> _getFileHandler(Request request, String folder, String file) async {
       var path = p.join((await getApplicationDocumentsDirectory()).path,"frosthaven","audio","output");
       File f = File(p.join(path,Uri.decodeFull(folder),Uri.decodeFull(file)));
-      print(f.path);
+      // print(f.path);
       if (await f.exists()) {
         return Response.ok(await f.readAsBytes(), headers: {"Content-Type" : "audio/mp3"});
       } else {
         return Response.notFound("File not found");
       }
+  }
+
+  Future<Response> _playFileHandler(Request request, String folder, String file) async {
+    var track = p.join(folder,file);
+    _gameState.action(PlayAudioCommand(track));
+    return Response.ok("");
   }
 
 

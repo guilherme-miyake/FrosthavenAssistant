@@ -1,4 +1,5 @@
 library game_state;
+import 'package:audioplayers/audioplayers.dart';
 import 'package:built_collection/built_collection.dart';
 import 'dart:collection';
 import 'dart:convert';
@@ -167,6 +168,7 @@ class GameState extends ActionHandler {
   //elements
   BuiltMap<Elements, ElementState> get elementState => BuiltMap.of(_elementState);
   final Map<Elements, ElementState> _elementState = HashMap();
+  final AudioPlayer audioPlayer = AudioPlayer();
 
   //modifierDeck
   ModifierDeck get modifierDeck => _modifierDeck; //todo: still mutable
