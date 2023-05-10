@@ -1,10 +1,5 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
-import 'package:frosthaven_assistant/Resource/commands/pause_audio_command.dart';
-
-import '../Resource/commands/imbue_element_command.dart';
-import '../Resource/commands/use_element_command.dart';
-import '../Resource/enums.dart';
 import '../Resource/state/game_state.dart';
 import '../Resource/settings.dart';
 import '../services/service_locator.dart';
@@ -49,13 +44,13 @@ class AnimatedContainerButtonState extends State<PlayButton> {
               focusColor: Colors.transparent,
               highlightColor: Colors.transparent,
               onTapDown: (TapDownDetails details) {
-                _gameState.action(PauseAudioCommand());
+                _gameState.pauseAudio();
               },
-              child: ValueListenableBuilder<int>(
-                  valueListenable: _gameState.commandIndex,
-                  builder: (context, value, child) {
+              child: StreamBuilder<PlayerState>(
+                stream: _gameState.getPlayerStateStream(),
+                  builder: (context, asyncSnapshot) {
                     Color? color;
-                    if (_gameState.audioPlayer.state == PlayerState.playing) {
+                    if (asyncSnapshot.data == PlayerState.playing) {
                       color = Colors.black;
                     } else {
                       color = Colors.grey;

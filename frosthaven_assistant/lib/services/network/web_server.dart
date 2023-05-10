@@ -14,7 +14,6 @@ import 'package:frosthaven_assistant/Resource/commands/draw_loot_card_command.da
 import 'package:frosthaven_assistant/Resource/commands/ice_wraith_change_form_command.dart';
 import 'package:frosthaven_assistant/Resource/commands/imbue_element_command.dart';
 import 'package:frosthaven_assistant/Resource/commands/next_round_command.dart';
-import 'package:frosthaven_assistant/Resource/commands/play_audio_command.dart';
 import 'package:frosthaven_assistant/Resource/commands/remove_character_command.dart';
 import 'package:frosthaven_assistant/Resource/commands/remove_condition_command.dart';
 import 'package:frosthaven_assistant/Resource/commands/set_character_level_command.dart';
@@ -104,7 +103,7 @@ class WebServer {
 
   Future<Response> _playFileHandler(Request request, String folder, String file) async {
     var track = p.join(folder,file);
-    _gameState.action(PlayAudioCommand(track));
+    _gameState.playAudio(track);
     return Response.ok("");
   }
 

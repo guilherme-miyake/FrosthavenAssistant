@@ -523,6 +523,7 @@ class SettingsMenuState extends State<SettingsMenu> {
                                         value: settings.enableWebServer.value,
                                         onChanged: (bool? value) {
                                           settings.enableWebServer.value = ! settings.enableWebServer.value;
+                                          settings.lastKnownWebPort = _webPortTextController.text;
                                           settings.saveToDisk();
                                           if (settings.enableWebServer.value) {
                                             // If the server is running, then we should start the web server

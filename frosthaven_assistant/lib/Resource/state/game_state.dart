@@ -168,7 +168,6 @@ class GameState extends ActionHandler {
   //elements
   BuiltMap<Elements, ElementState> get elementState => BuiltMap.of(_elementState);
   final Map<Elements, ElementState> _elementState = HashMap();
-  final AudioPlayer audioPlayer = AudioPlayer();
 
   //modifierDeck
   ModifierDeck get modifierDeck => _modifierDeck; //todo: still mutable

@@ -216,6 +216,11 @@ class Server {
               } else if (message.startsWith("ping")) {
                 print('ping from ${client.remoteAddress}');
                 sendToOnly("pong", client);
+              } else if (message.startsWith("Play:")) {
+                String path = message.split(":")[1];
+                _gameState.playAudioFile(path);
+              } else if (message.startsWith("Pause")) {
+                _gameState.pauseAudioFile();
               }
             } else {
               leftOverMessage = message;
