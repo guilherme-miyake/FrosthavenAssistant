@@ -57,11 +57,8 @@ class AnimatedContainerButtonState extends State<PlayButton> {
                     Color? color;
                     if (_gameState.audioPlayer.state == PlayerState.playing) {
                       color = Colors.black;
-                    } else if (_gameState.audioPlayer.state ==
-                        PlayerState.paused) {
-                      color = Colors.grey;
                     } else {
-                      color = Colors.transparent;
+                      color = Colors.grey;
                     }
 
                     return Image(
