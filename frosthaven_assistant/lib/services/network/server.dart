@@ -217,6 +217,7 @@ class Server {
                 print('ping from ${client.remoteAddress}');
                 sendToOnly("pong", client);
               } else if (message.startsWith("Play:")) {
+                sendToOthers(message, client);
                 List<String> parts = message.split(":");
                 if (parts.length == 3) {
                   String folder = parts[1];
@@ -225,6 +226,7 @@ class Server {
                   _gameState.playAudioFile(folder, file);
                 }
               } else if (message.startsWith("Pause")) {
+                sendToOthers(message, client);
                 print('Pause from ${client.remoteAddress}');
                 _gameState.pauseAudioFile();
               }
