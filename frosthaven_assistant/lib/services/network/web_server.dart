@@ -14,6 +14,7 @@ import 'package:frosthaven_assistant/Resource/commands/draw_loot_card_command.da
 import 'package:frosthaven_assistant/Resource/commands/ice_wraith_change_form_command.dart';
 import 'package:frosthaven_assistant/Resource/commands/imbue_element_command.dart';
 import 'package:frosthaven_assistant/Resource/commands/next_round_command.dart';
+import 'package:frosthaven_assistant/Resource/commands/next_turn_command.dart';
 import 'package:frosthaven_assistant/Resource/commands/remove_character_command.dart';
 import 'package:frosthaven_assistant/Resource/commands/remove_condition_command.dart';
 import 'package:frosthaven_assistant/Resource/commands/set_character_level_command.dart';
@@ -38,7 +39,7 @@ import '../service_locator.dart';
 import 'package:path/path.dart' as p;
 
 class WebServer {
-  static const int VERSION = 1;
+  static const int VERSION = 2;
   final GameState _gameState = getIt<GameState>();
 
   HttpServer? _server;
@@ -60,7 +61,8 @@ class WebServer {
       ..post('/applyCondition', _applyConditionHandler)
       ..post('/change', _applyChangeHandler)
       ..post('/setElement', _applySetElementHandler)
-      ..post('/loot', _lootHandler);
+      ..post('/loot', _lootHandler)
+      ..post('/setCurrentTurn', _setCurrentTurnHandler);
 
     _server = await shelf_io.serve(
       // See https://pub.dev/documentation/shelf/latest/shelf/logRequests.html
@@ -318,6 +320,14 @@ class WebServer {
       _gameState.action(DrawCommand());
     }
     return Response.ok('{}');
+  }
+
+  Future<Response> _setCurrentTurnHandler(Request request) async {
+    var data = Uri.decodeFull(await request.readAsString());
+    Map<String, dynamic> info = jsonDecode(data);
+    var name = info["name"];
+    _gameState.action(TurnDoneCommand(name));
+    return _getStateHandler(request);
   }
 
   Future<Response> _endRoundHandler(Request request) async {
