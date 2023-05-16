@@ -38,6 +38,7 @@ import '../service_locator.dart';
 import 'package:path/path.dart' as p;
 
 class WebServer {
+  static const int VERSION = 1;
   final GameState _gameState = getIt<GameState>();
 
   HttpServer? _server;
@@ -126,6 +127,7 @@ class WebServer {
       elements[key.name] = value;
     }
     var state = '{'
+        '"version": $VERSION,'
         '"level": ${_gameState.level.value}, '
         '"roundState": ${_gameState.roundState.value.index}, '
         '"round": ${_gameState.round.value}, '
