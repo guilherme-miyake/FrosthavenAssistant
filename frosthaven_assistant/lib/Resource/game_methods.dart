@@ -370,43 +370,47 @@ class GameMethods {
     _gameState._level.value = level;
   }
 
+  static void resetGameState() {
+    GameMethods.setRound(1);
+    _gameState._currentAbilityDecks.clear();
+    _gameState._scenarioSpecialRules.clear();
+    List<ListItemData> newList = [];
+    for (var item in _gameState.currentList) {
+      if (item is Character) {
+        if (item.characterClass.name != "Objective" &&
+            item.characterClass.name != "Escort") {
+          item.characterState.initiative.value = 0;
+          item.characterState.health.value = item.characterClass
+              .healthByLevel[item.characterState.level.value - 1];
+          item.characterState.maxHealth.value =
+              item.characterState.health.value;
+          item.characterState.xp.value = 0;
+          item.characterState.conditions.value.clear();
+          item.characterState.chill.value = 0;
+          item.characterState.summonList.value.clear();
+
+          if (item.id == "Beast Tyrant") {
+            //create the bear summon
+            final int bearHp = 8 + item.characterState.level.value * 2;
+            MonsterInstance bear = MonsterInstance.summon(
+                0, MonsterType.summon, "Bear", bearHp, 3, 2, 0, "beast", -1);
+            item.characterState.summonList.value.add(bear);
+          }
+
+          newList.add(item);
+        }
+      }
+    }
+
+    _gameState.modifierDeck.initDeck("");
+    _gameState.modifierDeckAllies.initDeck("allies");
+    _gameState._currentList = newList;
+  }
+
   static void setScenario(String scenario, bool section) {
     if (!section) {
       //first reset state
-      GameMethods.setRound(1);
-      _gameState._currentAbilityDecks.clear();
-      _gameState._scenarioSpecialRules.clear();
-      List<ListItemData> newList = [];
-      for (var item in _gameState.currentList) {
-        if (item is Character) {
-          if (item.characterClass.name != "Objective" &&
-              item.characterClass.name != "Escort") {
-            item.characterState.initiative.value = 0;
-            item.characterState.health.value = item.characterClass
-                .healthByLevel[item.characterState.level.value - 1];
-            item.characterState.maxHealth.value =
-                item.characterState.health.value;
-            item.characterState.xp.value = 0;
-            item.characterState.conditions.value.clear();
-            item.characterState.chill.value = 0;
-            item.characterState.summonList.value.clear();
-
-            if (item.id == "Beast Tyrant") {
-              //create the bear summon
-              final int bearHp = 8 + item.characterState.level.value * 2;
-              MonsterInstance bear = MonsterInstance.summon(
-                  0, MonsterType.summon, "Bear", bearHp, 3, 2, 0, "beast", -1);
-              item.characterState.summonList.value.add(bear);
-            }
-
-            newList.add(item);
-          }
-        }
-      }
-
-      _gameState.modifierDeck.initDeck("");
-      _gameState.modifierDeckAllies.initDeck("allies");
-      _gameState._currentList = newList;
+      resetGameState();
 
       //loot deck init
       if (scenario != "custom") {

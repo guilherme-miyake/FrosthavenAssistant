@@ -11,12 +11,14 @@ import 'package:frosthaven_assistant/Resource/commands/change_stat_commands/chan
 import 'package:frosthaven_assistant/Resource/commands/change_stat_commands/change_xp_command.dart';
 import 'package:frosthaven_assistant/Resource/commands/draw_command.dart';
 import 'package:frosthaven_assistant/Resource/commands/draw_loot_card_command.dart';
+import 'package:frosthaven_assistant/Resource/commands/end_scenario_command.dart';
 import 'package:frosthaven_assistant/Resource/commands/ice_wraith_change_form_command.dart';
 import 'package:frosthaven_assistant/Resource/commands/imbue_element_command.dart';
 import 'package:frosthaven_assistant/Resource/commands/next_round_command.dart';
 import 'package:frosthaven_assistant/Resource/commands/next_turn_command.dart';
 import 'package:frosthaven_assistant/Resource/commands/remove_character_command.dart';
 import 'package:frosthaven_assistant/Resource/commands/remove_condition_command.dart';
+import 'package:frosthaven_assistant/Resource/commands/remove_monster_command.dart';
 import 'package:frosthaven_assistant/Resource/commands/set_character_level_command.dart';
 import 'package:frosthaven_assistant/Resource/commands/set_init_command.dart';
 import 'package:frosthaven_assistant/Resource/commands/set_loot_owner_command.dart';
@@ -39,7 +41,7 @@ import '../service_locator.dart';
 import 'package:path/path.dart' as p;
 
 class WebServer {
-  static const int VERSION = 2;
+  static const int VERSION = 3;
   final GameState _gameState = getIt<GameState>();
 
   HttpServer? _server;
@@ -50,19 +52,21 @@ class WebServer {
       ..get('/file/<folder>/<file>', _getFileHandler)
       ..get('/play/<folder>/<file>', _playFileHandler)
       ..get('/out/<file>', _getOutFileHandler)
+      ..get('/getLoot', _getLootHandler)
       ..post('/startRound', _startRoundHandler)
-      ..post('/endRound', _endRoundHandler)
-      ..post('/addMonster', _addMonsterHandler)
-      ..post('/addCharacter', _addCharacterHandler)
-      ..post('/removeCharacter', _removeCharacterHandler)
-      ..post('/switchMonster', _switchMonsterTypeHandler)
-      ..post('/setScenario', _setScenarioHandler)
-      ..post('/setSection', _setSectionHandler)
-      ..post('/applyCondition', _applyConditionHandler)
-      ..post('/change', _applyChangeHandler)
-      ..post('/setElement', _applySetElementHandler)
-      ..post('/loot', _lootHandler)
-      ..post('/setCurrentTurn', _setCurrentTurnHandler);
+      ..post('/endRound', _endRoundHandler)..post(
+          '/addMonster', _addMonsterHandler)..post(
+          '/addCharacter', _addCharacterHandler)..post(
+          '/removeCharacter', _removeCharacterHandler)..post(
+          '/switchMonster', _switchMonsterTypeHandler)..post(
+          '/setScenario', _setScenarioHandler)..post(
+          '/setSection', _setSectionHandler)..post(
+          '/applyCondition', _applyConditionHandler)..post(
+          '/change', _applyChangeHandler)..post(
+          '/setElement', _applySetElementHandler)..post(
+          '/loot', _lootHandler)..post(
+          '/setCurrentTurn', _setCurrentTurnHandler)..post(
+          '/endScenario', _endScenarioHandler);
 
     _server = await shelf_io.serve(
       // See https://pub.dev/documentation/shelf/latest/shelf/logRequests.html
@@ -441,5 +445,47 @@ class WebServer {
       }
     }
     return Response.ok("");
+  }
+
+  Future<Response> _getLootHandler(Request request) async {
+    Map<String, Map<String, int>> charactersLoot = {};
+    var characters = GameMethods.getCurrentCharacters();
+    for (var character in characters) {
+      charactersLoot[character.characterClass.name] = {};
+    }
+    for (var card in _gameState.lootDeck.discardPile.getList()) {
+      var owner = card.owner;
+      if (owner != null) {
+        var characterLoot = charactersLoot[owner]!;
+        var itemName = card.gfx;
+        int value = 0;
+        if (itemName.startsWith("coin")) {
+          if (itemName.endsWith("3")) {
+            value += 3;
+          } else if (itemName.endsWith("2")) {
+            value += 2;
+          } else {
+            value += 1;
+          }
+          itemName = "coin";
+          value += card.enhanced;
+        } else {
+          value += card.getValue() ?? 0;
+        }
+        characterLoot[itemName] = value + (characterLoot[itemName] ?? 0);
+      }
+    }
+
+    var output = charactersLoot.entries
+        .map((c) =>
+            '"${c.key}" : {${charactersLoot[c.key]!.entries.map((e) => '"${e.key}": ${e.value}').join(",")}}')
+        .join(",");
+    return Response.ok('{"loot" : {$output}, "baseXp":${GameMethods.getXPValue()}, "coinValue" : ${GameMethods.getCoinValue()}}',
+        headers: {"Content-Type": "application/json"});
+  }
+
+  Future<Response> _endScenarioHandler(Request request) async {
+    _gameState.action(EndScenarioCommand());
+    return _getStateHandler(request);
   }
 }
