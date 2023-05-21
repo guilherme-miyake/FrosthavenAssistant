@@ -2,10 +2,14 @@ name: Flutter CI
 
 on: workflow_dispatch
 
+defaults:
+  run:
+    working-directory: frosthaven_assistant
+
 jobs:
   build-and-release-linux:
     runs-on: ubuntu-latest
-
+            
     steps:
       - uses: actions/checkout@v2      
         with :
@@ -24,7 +28,7 @@ jobs:
       - name: Enable linux build
         run: flutter config --enable-linux-desktop
       - name: Build artifacts
-        run: flutter build linux --release
+        run: flutter build linux --release      
       - name: Archive Release
         uses: thedoctor0/zip-release@master
         with:
@@ -41,6 +45,9 @@ jobs:
 
   build-and-release-windows:
     runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: frosthaven_assistant
 
     steps:
       - uses: actions/checkout@v2
@@ -59,6 +66,11 @@ jobs:
         run: flutter config --enable-windows-desktop
       - name: Build artifacts
         run: flutter build windows --release
+      - name: copy ffmpeg
+        uses: canastro/copy-file-action@master
+        with:
+          source: "../release materials/ffmpeg.exe"
+          target: "build/windows/runner/Release/ffmpeg.exe"
       - name: Archive Release
         uses: thedoctor0/zip-release@master
         with:
