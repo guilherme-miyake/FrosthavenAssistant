@@ -1,29 +1,44 @@
-name: Flutter
+name: Flutter CI
 
-on:
-  push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+on: workflow_dispatch
+
+defaults:
+  run:
+    working-directory: frosthaven_assistant
 
 jobs:
-  build:
+  build-and-release-linux:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./frosthaven_assistant
+            
     steps:
-      - uses: actions/checkout@v3
-      - uses: subosito/flutter-action@v2
+      - uses: actions/checkout@v2      
+        with :
+          ref: 'webserver'
+      - uses: subosito/flutter-action@v1
         with:
-          flutter-version: '3.7.12'
           channel: 'stable'
-      - run: flutter --version
-      - name: Install xmllint
-        run: sudo apt-get install -y ninja-build
-      - run: flutter build linux
-      - name: 'Upload Artifact'
-        uses: actions/upload-artifact@v3
+          flutter-version: '3.7.12'
+          cache: true
+      - name: Install dependencies
+        run: sudo apt-get install -y clang cmake libunwind-dev ninja-build pkg-config libgtk-3-dev liblzma-dev libunwind-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-plugins-good gstreamer1.0-plugins-bad
+      - name: Install project dependencies
+        run: flutter pub get
+      - name: Generate intermediates
+        run: flutter pub run build_runner build --delete-conflicting-outputs
+      - name: Enable linux build
+        run: flutter config --enable-linux-desktop
+      - name: Build artifacts
+        run: flutter build linux --release      
+      - name: Archive Release
+        uses: thedoctor0/zip-release@master
         with:
-          name: linux
-          path: build/linux/x64/release/bundle
+          type: 'zip'
+          filename: frosthaven-assistant-webserver-linux.zip
+          directory: build/linux/x64/release/bundle
+      - name: Linux Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GITHUB_TOKEN: ${{ secrets.SECRET_TOKEN }}
+        with:
+          files: build/linux/x64/release/bundle/frosthaven-assistant-webserver-linux.zip
