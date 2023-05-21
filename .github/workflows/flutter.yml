@@ -34,7 +34,7 @@ jobs:
         with:
           type: 'zip'
           filename: frosthaven-assistant-webserver-linux.zip
-          directory: frosthaven_assistant/build/linux/x64/release/bundle
+          path: frosthaven_assistant/build/linux/x64/release/bundle
       - name: Linux Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
