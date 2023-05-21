@@ -216,6 +216,19 @@ class Server {
               } else if (message.startsWith("ping")) {
                 print('ping from ${client.remoteAddress}');
                 sendToOnly("pong", client);
+              } else if (message.startsWith("Play:")) {
+                sendToOthers(message, client);
+                List<String> parts = message.split(":");
+                if (parts.length == 3) {
+                  String folder = parts[1];
+                  String file = parts[2];
+                  print('Play from ${client.remoteAddress} : $folder / $file');
+                  _gameState.playAudioFile(folder, file);
+                }
+              } else if (message.startsWith("Pause")) {
+                sendToOthers(message, client);
+                print('Pause from ${client.remoteAddress}');
+                _gameState.pauseAudioFile();
               }
             } else {
               leftOverMessage = message;
@@ -239,7 +252,9 @@ class Server {
               break;
             }
           }*/
-          if(error is SocketException && (error.osError?.errorCode == 103 || error.osError?.errorCode == 32)) {
+          if (error is SocketException &&
+              (error.osError?.errorCode == 103 ||
+                  error.osError?.errorCode == 32)) {
             stopServer(error.toString());
           }
         },
