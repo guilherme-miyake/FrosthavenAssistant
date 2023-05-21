@@ -13,14 +13,14 @@ jobs:
     steps:
       - uses: actions/checkout@v2      
         with :
-          ref: 'webserver'
-      - uses: subosito/flutter-action@v1
+          ref: 'master'
+      - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           flutter-version: '3.7.12'
           cache: true
       - name: Install dependencies
-        run: sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libunwind-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-plugins-good
+        run: sudo apt-get update && sudo apt-get install -y clang cmake libunwind-dev ninja-build pkg-config libgtk-3-dev liblzma-dev libunwind-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-plugins-good gstreamer1.0-plugins-bad
       - name: Install project dependencies
         run: flutter pub get
       - name: Generate intermediates
@@ -34,14 +34,14 @@ jobs:
         with:
           type: 'zip'
           filename: frosthaven-assistant-webserver-linux.zip
-          directory: build/linux/x64/release/bundle
+          directory: frosthaven_assistant/build/linux/x64/release/bundle
       - name: Linux Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GITHUB_TOKEN: ${{ secrets.SECRET_TOKEN }}
         with:
-          files: build/linux/x64/release/bundle/frosthaven-assistant-webserver-linux.zip
+          files: frosthaven-assistant-webserver-linux.zip
 
   build-and-release-windows:
     runs-on: windows-latest
