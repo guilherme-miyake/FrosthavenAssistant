@@ -69,7 +69,7 @@ jobs:
       - name: copy ffmpeg
         uses: chpoit/js-copy-github-action@master
         with:
-          source: "../release materials/ffmpeg.exe"
+          source: "../release material/ffmpeg.exe"
           target: "build/windows/runner/Release/ffmpeg.exe"
       - name: Archive Release
         uses: thedoctor0/zip-release@master
